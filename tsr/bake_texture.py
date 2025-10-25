@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import xatlas
+# import xatlas
 import trimesh
 import moderngl
 from PIL import Image

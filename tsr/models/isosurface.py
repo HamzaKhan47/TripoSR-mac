@@ -3,7 +3,7 @@ from typing import Callable, Optional, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
-from torchmcubes import marching_cubes
+from skimage.measure import marching_cubes
 
 
 class IsosurfaceHelper(nn.Module):
@@ -42,11 +42,13 @@ class MarchingCubeHelper(IsosurfaceHelper):
         level: torch.FloatTensor,
     ) -> Tuple[torch.FloatTensor, torch.LongTensor]:
         level = -level.view(self.resolution, self.resolution, self.resolution)
-        try:
-            v_pos, t_pos_idx = self.mc_func(level.detach(), 0.0)
-        except AttributeError:
-            print("torchmcubes was not compiled with CUDA support, use CPU version instead.")
-            v_pos, t_pos_idx = self.mc_func(level.detach().cpu(), 0.0)
+        import numpy as np
+        # Convert to proper NumPy 3D array for skimage
+        v_pos, t_pos_idx, _, _ = self.mc_func(level.squeeze().detach().cpu().numpy(), 0.0)
         v_pos = v_pos[..., [2, 1, 0]]
         v_pos = v_pos / (self.resolution - 1.0)
-        return v_pos.to(level.device), t_pos_idx.to(level.device)
+        t_pos_idx = torch.as_tensor(t_pos_idx.copy(), device=level.device)
+        v_pos = torch.as_tensor(v_pos.copy(), device=level.device, dtype=torch.float32)
+
+        return v_pos, t_pos_idx
+

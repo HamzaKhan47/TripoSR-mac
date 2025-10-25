@@ -6,7 +6,6 @@ import time
 import numpy as np
 import rembg
 import torch
-import xatlas
 from PIL import Image
 
 from tsr.system import TSR
